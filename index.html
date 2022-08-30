@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name='robots' content='noindex,nofollow' />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+    <title>Medmen Tax Calculator</title>
+  </head>
+
+  <body>
+    <form method="get">
+      <fieldset>
+        <legend>Amount Spent</legend>
+        
+        <input id="spent-integer-part" type="number" name="spentIntegerPart" min="0" value="0" required />
+        .
+        <input id="spent-fractional-part" type="number" name="spentFractionalPart" min="0" max="99" value="0" required />
+      </fieldset>
+      <fieldset>
+        <legend>Percent Off</legend>
+        
+        <input id="percent-off" type="number" name="percentOff" min="0" max="100" value="0" required />%
+      </fieldset>
+      <fieldset>
+        <legend>Cash Off</legend>
+        
+        <input id="cash-off-integer-part" type="number" name="cashOffIntegerPart" min="0" value="0" required />
+        .
+        <input id="cash-off-fractional-part" type="number" name="cashOffFractionalPart" min="0" max="99" value="0" required />
+      </fieldset>
+      <button type="reset">Reset</button>
+      <button type="submit">Calculate</button>
+    </form>
+    
+    <dl id="result">
+      <dt>Subtotal</dt>
+      <dd id="subtotal">$0</dd>
+      <dt>Discount</dt>
+      <dd id="discount">$0</dd>
+      <dt>Excise Tax (15%)</dt>
+      <dd id="excise-tax">$0</dd>
+      <dt>Local Cannabis Tax (8%)</dt>
+      <dd id="local-c-tax">$0</dd>
+      <dt>Sales Tax (7.75%)</dt>
+      <dd id="sales-tax">$0</dd>
+      <dt>Grand Total</dt>
+      <dd id="grand-total">$0</dd>
+    </dl>
+    
+    <p>Disclaimer: all numbers shown are approximate, and your receipt is the ultimate source of truth.</p>
+    
+    <script type="text/javascript">
+      function getParamAsNumber(params, key) {
+        return Number.isNaN(parseInt(params.get(key), 10)) ? 0 : parseInt(params.get(key, 10));
+      }
+      
+      function getDiscount(subtotal, cashOff, percentOff) {
+        if (cashOff > subtotal) {
+          return subtotal;
+        }
+        
+        return cashOff + Math.floor((subtotal - cashOff) * percentOff)
+      }
+    
+      const params = new URLSearchParams(window.location.search);
+      
+      const spentIntegerPart = getParamAsNumber(params, "spentIntegerPart");
+      const spentFractionalPart = getParamAsNumber(params, "spentFractionalPart");
+      const percentOff = getParamAsNumber(params, "percentOff");
+      const cashOffIntegerPart = getParamAsNumber(params, "cashOffIntegerPart");
+      const cashOffFractionalPart = getParamAsNumber(params, "cashOffFractionalPart");
+
+      const subtotal = (spentIntegerPart * 100) + spentFractionalPart;
+      const discount = getDiscount(subtotal, (cashOffIntegerPart * 100) + cashOffFractionalPart, percentOff / 100);
+      const exciseTax = Math.ceil(subtotal * 0.15);
+      const localCTax = Math.ceil((subtotal - discount) * 0.08);
+      const salesTax = Math.ceil((subtotal - discount + exciseTax + localCTax) * 0.0775);
+      const grandTotal = subtotal - discount + exciseTax + localCTax + salesTax;
+      
+      document.getElementById("spent-integer-part").value = spentIntegerPart;
+      document.getElementById("spent-fractional-part").value = spentFractionalPart;
+      document.getElementById("percent-off").value = percentOff;
+      document.getElementById("cash-off-integer-part").value = cashOffIntegerPart;
+      document.getElementById("cash-off-fractional-part").value = cashOffFractionalPart;
+      
+      document.getElementById("subtotal").innerHTML = `${subtotal/100}`;
+      document.getElementById("discount").innerHTML = `${discount/100}`;
+      document.getElementById("excise-tax").innerHTML = `${exciseTax/100}`;
+      document.getElementById("local-c-tax").innerHTML = `${localCTax/100}`;
+      document.getElementById("sales-tax").innerHTML = `${salesTax/100}`;
+      document.getElementById("grand-total").innerHTML = `${grandTotal/100}`;
+    </script>
+  </body>
+</html>
